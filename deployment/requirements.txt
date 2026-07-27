@@ -1,0 +1,6 @@
+# Only for deployment
+streamlit
+langchain-groq
+langchain-google-genai
+python-dotenv
+pydantic-settings
