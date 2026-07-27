@@ -9,4 +9,3 @@ elif [[ "$FIRST_ARGUMENT" == "--no-build" ]]; then
 elif [[ "$FIRST_ARGUMENT" == "down" ]]; then
     docker compose down
 fi
-#docker compose up -d --build
