@@ -13,4 +13,3 @@ wheels/
 .claude
 .streamlit
 .vscode
-config.py
