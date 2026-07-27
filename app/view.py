@@ -2,7 +2,7 @@ import streamlit as st
 from langchain_groq import ChatGroq
 from langchain_google_genai import ChatGoogleGenerativeAI
 from dotenv import load_dotenv
-from app.config import settings
+from config import settings
 load_dotenv()
 
 st.set_option("client.toolbarMode", "viewer")
