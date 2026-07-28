@@ -18,6 +18,15 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "notebook>=7.6.1",
     "ipykernel>=7.3.0",
+    "langchain-chroma",
+    "langchain-huggingface",
+    "chromadb",
+    "sentence-transformers",
+    "pandas",
+    "fpdf2",
+    "pypdf",
+    "langchain-community",
+    "langchain-text-splitters",
 ]
 [dependency-groups]
 dev = [

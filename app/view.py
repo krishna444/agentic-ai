@@ -1,6 +1,8 @@
 import streamlit as st
 from langchain_groq import ChatGroq
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_community.chat_message_histories import ChatMessageHistory
+from langchain_core.runnables.history import RunnableWithMessageHistory
 from dotenv import load_dotenv
 from config import settings
 load_dotenv()
@@ -28,6 +30,18 @@ st.title(f"🤖 Chatbot: {selected_option}")
 selected_model_key = MODEL_OPTIONS[selected_option]
 
 
+# ---- Memory Store Initialization ---
+# Session state store to hold message history objects per thread
+if "store" not in st.session_state:
+    st.session_state.store = {}
+
+def get_session_history(session_id: str):
+    if session_id not in st.session_state.store:
+        st.session_state.store[session_id] = ChatMessageHistory()
+    return st.session_state.store[session_id]
+
+
+
 if "llm_groq" not in st.session_state:
     st.session_state.llm_groq=ChatGroq(
         model="qwen/qwen3.6-27b",#settings.GROQ_MODEL,
@@ -44,12 +58,30 @@ if "llm_genai" not in st.session_state:
         #thinking_budget=-1        
     )
 
+base_llm = st.session_state.llm_groq if selected_model_key == "groq" else st.session_state.llm_genai
+
 # Dynamic LLM resolution
-active_llm = st.session_state.llm_groq if selected_model_key == "groq" else st.session_state.llm_genai
+active_llm = RunnableWithMessageHistory(
+    runnable=base_llm, 
+    get_session_history=get_session_history,
+    input_message_key="input",
+    history_message_key="history"
+)
 
 #st.sidebar.info(active_llm.model)
-st.sidebar.info(f"Model# **{active_llm.model}**")
+st.sidebar.info(f"Model# **{base_llm.model}**")
 
+THREAD_ID="user-krishna-session-1"
+config={
+    "configurable":{
+        "session_id":THREAD_ID}}
+
+# Render conversation history on rerun
+current_history = get_session_history(THREAD_ID)
+for msg in current_history.messages:
+    role = "user" if msg.type == "human" else "assistant"
+    with st.chat_message(role):
+        st.markdown(msg.content)
 
 if prompt := st.chat_input("What is on your mind?"):
     with st.chat_message("user"):
@@ -57,8 +89,8 @@ if prompt := st.chat_input("What is on your mind?"):
         
         
     with st. chat_message("assistant"):
-        def response_generator():
-            stream=active_llm.stream(prompt)
+        def response_generator():            
+            stream=active_llm.stream(prompt,config=config)
             for chunk in stream:
                 if isinstance(chunk.content, str):
                     yield chunk.content
