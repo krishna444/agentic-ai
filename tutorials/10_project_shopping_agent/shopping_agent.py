@@ -2,7 +2,7 @@ import base64
 import json
 import os
 import sqlite3
-from typing import Optional
+from typing import Optional, Union
 
 from dotenv import load_dotenv
 from langchain.agents import create_agent
@@ -12,12 +12,13 @@ from langchain_groq import ChatGroq
 
 from reviews_api import get_product_rating
 
+
 load_dotenv()
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "store.db")
 
-llm = ChatGroq(model="qwen/qwen3-32b", temperature=0)
-vision_llm = ChatGroq(model="meta-llama/llama-4-scout-17b-16e-instruct", temperature=0)
+llm = ChatGroq(model="qwen/qwen3.6-27b", temperature=0)
+vision_llm = ChatGroq(model="qwen/qwen3.6-27b", temperature=0)
 
 
 # ---------------------------------------------------------------------------
@@ -25,10 +26,10 @@ vision_llm = ChatGroq(model="meta-llama/llama-4-scout-17b-16e-instruct", tempera
 # ---------------------------------------------------------------------------
 
 @tool
-def search_products(query: str, max_price: Optional[float] = None, is_organic: Optional[bool] = None) -> str:
+def search_products(query: str, max_price: Optional[float] = None, is_organic: Optional[Union[bool, str]] = None) -> str:
     """
     Search the product database by keyword (matched against name, description, and category).
-    Optionally filter by maximum price and/or organic status.
+    Optionally filter by maximum price and/or organic status as boolean.
     Returns a JSON array of matching products, each with: id, name, category, price,
     description, is_organic.
     """
@@ -49,7 +50,14 @@ def search_products(query: str, max_price: Optional[float] = None, is_organic: O
 
     if is_organic is not None:
         sql += " AND is_organic = ?"
-        params.append(1 if is_organic else 0)
+        # Convert string 'true'/'false' to boolean for DB filter
+        if isinstance(is_organic, str):
+            organic_flag = 1 if is_organic.lower() == 'true' else 0
+        elif isinstance(is_organic, bool):
+            organic_flag = 1 if is_organic else 0
+        else:
+            organic_flag = 1 if is_organic else 0
+        params.append(organic_flag)
 
     cursor.execute(sql, params)
     rows = cursor.fetchall()
@@ -188,7 +196,7 @@ if __name__ == "__main__":
                     "role": "user",
                     "content": (
                         "I want to buy organic honey with 4.5+ rating and less than $20 price."
-                    ),
+                    ), 
                 }
             ]
         }

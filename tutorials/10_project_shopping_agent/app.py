@@ -1,5 +1,14 @@
 import os
 import tempfile
+import types
+import sys
+
+# Provide dummy torchvision modules to avoid import errors in environments without torchvision
+#torchvision_dummy = types.ModuleType('torchvision')
+#sys.modules['torchvision'] = torchvision_dummy
+#sys.modules['torchvision.transforms'] = types.ModuleType('torchvision.transforms')
+#sys.modules['torchvision.transforms.v2'] = types.ModuleType('torchvision.transforms.v2')
+#sys.modules['torchvision.io'] = types.ModuleType('torchvision.io')
 
 import streamlit as st
 
