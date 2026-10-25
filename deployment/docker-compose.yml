@@ -7,6 +7,8 @@ services:
     restart: unless-stopped
     ports:
       - "8501:8501"
+    networks:
+      - agentic_ai_net
     env_file:
       - ../.env
     # Optional : live reload app changes without rebuilding image
