@@ -16,5 +16,5 @@ services:
     volumes:
       - ../app:/app/app
 networks:
-  quiz_net:
+  agentic_ai_net:
     driver: bridge
