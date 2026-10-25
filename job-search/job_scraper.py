@@ -3,6 +3,7 @@ import json
 from datetime import datetime
 import pandas as pd
 from jobspy import scrape_jobs
+from playwright.sync_api import sync_playwright
 
 def run_job_search():
     # 1. Search parameters
@@ -18,7 +19,7 @@ def run_job_search():
     results_per_term = 15
     
     # Supported sites in JobSpy: indeed, linkedin, glassdoor, zip_recruiter, etc.
-    site_names = ["indeed", "linkedin", "glassdoor"]
+    site_names = ["indeed", "linkedin", "glassdoor", "google"]
     
     all_jobs_list = []
 
@@ -86,4 +87,4 @@ def run_job_search():
     print(f" Saved structured JSON to: {json_filename}")
 
 if __name__ == "__main__":
-    run_job_search()
+    run_job_search()     

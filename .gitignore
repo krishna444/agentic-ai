@@ -13,3 +13,6 @@ wheels/
 .claude
 .streamlit
 .vscode
+
+# job search
+job-search/scraped_jobs/
