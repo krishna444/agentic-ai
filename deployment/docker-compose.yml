@@ -1,3 +1,4 @@
+name: agentic-ai
 services:
   chatbot:    
     build:
