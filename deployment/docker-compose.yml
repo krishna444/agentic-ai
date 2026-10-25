@@ -15,6 +15,6 @@ services:
     # Optional : live reload app changes without rebuilding image
     volumes:
       - ../app:/app/app
-    networks:
-      quiz_net:
-        driver: bridge
+networks:
+  quiz_net:
+    driver: bridge
