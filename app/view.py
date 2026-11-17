@@ -44,7 +44,7 @@ def get_session_history(session_id: str):
 
 if "llm_groq" not in st.session_state:
     st.session_state.llm_groq=ChatGroq(
-        model="qwen/qwen3.6-27b",#settings.GROQ_MODEL,
+        model=settings.GROQ_MODEL,
         api_key=settings.GROQ_API_KEY,
         temperature=0.7,
         #reasoning_effort="none"        
