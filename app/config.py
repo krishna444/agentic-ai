@@ -10,8 +10,7 @@ class Settings(BaseSettings):
     
     # LLM Models
     GEMINI_MODEL: str= "gemma-4-31b-it"
-    GMINI_PROVIDER:str= "google_genai"
-    
+
     GROQ_MODEL:str="openai/gpt-oss-20b"
     GROQ_PROVIDER:str="openai"
     GROQ_BASE_URL:str='https://api.groq.com/openai/v1'
