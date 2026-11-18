@@ -12,7 +12,7 @@ class PromptService:
     def __init__(self):
         logger.info(f"Initializing models")
         model=init_chat_model(
-            settings.GROQ_MODEL,
+            settings.GROQ_MODEL_OSS_120B,
             model_provider=settings.GROQ_PROVIDER,
             temperature=0.5,
             timeout=600,

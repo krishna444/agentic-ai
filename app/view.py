@@ -65,7 +65,7 @@ PROVIDERS = {
         "disable_thinking": True,
     },
     "GROQ": {
-        "models": [settings.GROQ_MODEL],
+        "models": [settings.GROQ_MODEL_OSS_120B, settings.GROQ_MODEL_OSS_20B],
         "api_key": settings.GROQ_API_KEY,
     },
     "GEMINI": {
@@ -190,15 +190,31 @@ def _render_user_message(text: str):
     )
 
 
+def _render_stats_line(stats: dict):
+    out_tokens = stats.get("out_tokens", 0)
+    elapsed = stats.get("elapsed", 0)
+    in_tokens = stats.get("in_tokens")
+    st.markdown(
+        f"<small style='color:gray;'>"
+        f"{out_tokens} tokens · {elapsed:.1f}s · {out_tokens / elapsed:.1f} tok/s"
+        + (f" (prompt {in_tokens} tokens)" if in_tokens else "")
+        + "</small>",
+        unsafe_allow_html=True,
+    )
+
+
 # Render conversation history on rerun
 current_history = get_session_history(THREAD_ID)
-for msg in current_history.messages:
+msg_stats = st.session_state.get("msg_stats", {})
+for i, msg in enumerate(current_history.messages):
     role = "user" if msg.type == "human" else "assistant"
     with st.chat_message(role):
         if role == "user":
             _render_user_message(msg.content)
         else:
             st.markdown(msg.content)
+            if i in msg_stats:
+                _render_stats_line(msg_stats[i])
 
 if prompt := st.chat_input("What is on your mind?"):
     with st.chat_message("user"):
@@ -239,13 +255,6 @@ if prompt := st.chat_input("What is on your mind?"):
 
         st.write_stream(response_generator())
 
-        out_tokens = stats.get("out_tokens", 0)
-        elapsed = stats.get("elapsed", 0)
-        in_tokens = stats.get("in_tokens")
-        st.markdown(
-            f"<small style='color:gray;'>"
-            f"{out_tokens} tokens · {elapsed:.1f}s · {out_tokens / elapsed:.1f} tok/s"
-            + (f" (prompt {in_tokens} tokens)" if in_tokens else "")
-            + "</small>",
-            unsafe_allow_html=True,
-        )
+        msg_stats = st.session_state.setdefault("msg_stats", {})
+        msg_stats[len(current_history.messages) - 1] = stats
+        _render_stats_line(stats)

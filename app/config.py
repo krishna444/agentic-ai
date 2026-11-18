@@ -11,7 +11,8 @@ class Settings(BaseSettings):
     GOOGLE_BASE_URL: str
     
     GROQ_API_KEY: str
-    GROQ_MODEL:str
+    GROQ_MODEL_OSS_120B:str
+    GROQ_MODEL_OSS_20B:str
     GROQ_PROVIDER:str
     
     GPT_API_KEY:str
