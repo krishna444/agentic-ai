@@ -8,6 +8,33 @@ from config import settings
 
 st.set_option("client.toolbarMode", "viewer")
 
+# ---- Login gate ----
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+if not st.session_state.authenticated:
+    st.title("🔒 Login")
+    with st.form("login_form"):
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        submitted = st.form_submit_button("Sign in", use_container_width=True)
+    if submitted:
+        if username == settings.APP_USERNAME and password == settings.APP_PASSWORD:
+            st.session_state.authenticated = True
+            st.rerun()
+        else:
+            st.error("Invalid username or password.")
+    st.stop()
+
+# ---- Sidebar: user + logout ----
+with st.sidebar:
+    st.write(f"👤 **{settings.APP_USERNAME}**")
+    if st.button("🚪 Logout"):
+        st.session_state.authenticated = False
+        st.session_state.clear()
+        st.rerun()
+    st.divider()
+
 PROVIDERS = {
     "GROQ": {
         "models": [settings.GROQ_MODEL],
@@ -112,14 +139,16 @@ def _flatten_content(content):
 
 
 def _normalize_messages(messages):
-    from langchain_core.messages import AIMessage, HumanMessage
+    from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
-    return [
+    normalized = [SystemMessage(content=settings.SYSTEM)]
+    normalized += [
         HumanMessage(content=_flatten_content(m.content))
         if m.type == "human"
         else AIMessage(content=_flatten_content(m.content))
         for m in messages
     ]
+    return normalized
 
 
 chat_with_memory = _normalize_messages | base_llm

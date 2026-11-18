@@ -32,6 +32,9 @@ class Settings(BaseSettings):
 
     SYSTEM: str
     HUMAN: str
+
+    APP_USERNAME: str
+    APP_PASSWORD: str
     
     model_config = SettingsConfigDict(env_file=".env",extra="ignore")
 
