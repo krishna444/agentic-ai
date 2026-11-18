@@ -108,6 +108,7 @@ def build_llm(provider_key: str, model: str):
         api_key=spec["api_key"],
         base_url=spec["base_url"],
         temperature=extra_kwargs.get("temperature", 0.2),
+        stream_usage=True,
         **{k: v for k, v in extra_kwargs.items() if k != "temperature"},
     )
 
@@ -244,7 +245,7 @@ if prompt := st.chat_input("What is on your mind?"):
         st.markdown(
             f"<small style='color:gray;'>"
             f"{out_tokens} tokens · {elapsed:.1f}s · {out_tokens / elapsed:.1f} tok/s"
-            + (f" · prompt {in_tokens} tokens" if in_tokens else "")
+            + (f" (prompt {in_tokens} tokens)" if in_tokens else "")
             + "</small>",
             unsafe_allow_html=True,
         )
