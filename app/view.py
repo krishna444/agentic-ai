@@ -1,3 +1,6 @@
+import html
+import time
+
 import streamlit as st
 from langchain_groq import ChatGroq
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -7,6 +10,22 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 from config import settings
 
 st.set_option("client.toolbarMode", "viewer")
+
+st.markdown(
+    """
+    <style>
+        [data-testid="stChatMessage"] {
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+            margin-bottom: 0rem;
+        }
+        [data-testid="stChatMessageContent"] p {
+            margin-bottom: 0.25rem;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 # ---- Login gate ----
 if "authenticated" not in st.session_state:
@@ -19,8 +38,10 @@ if not st.session_state.authenticated:
         password = st.text_input("Password", type="password")
         submitted = st.form_submit_button("Sign in", use_container_width=True)
     if submitted:
-        if username == settings.APP_USERNAME and password == settings.APP_PASSWORD:
+        expected = settings.users_map.get(username.strip())
+        if expected is not None and password == expected:
             st.session_state.authenticated = True
+            st.session_state.username = username.strip()
             st.rerun()
         else:
             st.error("Invalid username or password.")
@@ -28,7 +49,8 @@ if not st.session_state.authenticated:
 
 # ---- Sidebar: user + logout ----
 with st.sidebar:
-    st.write(f"👤 **{settings.APP_USERNAME}**")
+    st.title("Welcome to AI Chatbot")
+    st.write(f"👤 **{st.session_state.username}**")
     if st.button("🚪 Logout"):
         st.session_state.authenticated = False
         st.session_state.clear()
@@ -36,6 +58,12 @@ with st.sidebar:
     st.divider()
 
 PROVIDERS = {
+    "OCI": {
+        "models": [settings.OCI_MODEL_GEMMA, settings.OCI_MODEL_QWEN],
+        "api_key": settings.OCI_LLM_API_KEY,
+        "base_url": settings.OCI_LLM_BASE_URL,
+        "disable_thinking": True,
+    },
     "GROQ": {
         "models": [settings.GROQ_MODEL],
         "api_key": settings.GROQ_API_KEY,
@@ -44,12 +72,6 @@ PROVIDERS = {
         "models": [settings.GOOGLE_MODEL],
         "api_key": settings.GOOGLE_API_KEY,
         "base_url": settings.GOOGLE_BASE_URL,
-    },
-    "OCI": {
-        "models": [settings.OCI_MODEL_GEMMA, settings.OCI_MODEL_QWEN],
-        "api_key": settings.OCI_LLM_API_KEY,
-        "base_url": settings.OCI_LLM_BASE_URL,
-        "disable_thinking": True,
     },
     "OPENROUTER": {
         "models": [settings.OPENROUTER_MODEL_DEEPSEEK, settings.OPENROUTER_MODEL_GLM],
@@ -103,8 +125,6 @@ selected_model = st.sidebar.selectbox(
     options=provider_spec["models"],
     index=0,
 )
-st.title(f"🤖 Chatbot: {selected_provider} / {selected_model}")
-
 # ---- LLM cache (per provider+model) ----
 if "llm_cache" not in st.session_state:
     st.session_state.llm_cache = {}
@@ -158,28 +178,73 @@ active_llm = RunnableWithMessageHistory(
     get_session_history=get_session_history,
 )
 
-THREAD_ID = "user-krishna-session-1"
+THREAD_ID = f"user-{st.session_state.username}-session-1"
 config = {"configurable": {"session_id": THREAD_ID}}
+
+def _render_user_message(text: str):
+    safe = html.escape(text)
+    st.markdown(
+        f'<span style="color:#0B62A4;font-weight:600;">{safe}</span>',
+        unsafe_allow_html=True,
+    )
+
 
 # Render conversation history on rerun
 current_history = get_session_history(THREAD_ID)
 for msg in current_history.messages:
     role = "user" if msg.type == "human" else "assistant"
     with st.chat_message(role):
-        st.markdown(msg.content)
+        if role == "user":
+            _render_user_message(msg.content)
+        else:
+            st.markdown(msg.content)
 
 if prompt := st.chat_input("What is on your mind?"):
     with st.chat_message("user"):
-        st.markdown(prompt)
+        _render_user_message(prompt)
 
     with st.chat_message("assistant"):
+        stats = {}
+
         def response_generator():
+            start = time.perf_counter()
+            out_tokens = 0
+            in_tokens = None
+            full_text = ""
             stream = active_llm.stream(prompt, config=config)
             for chunk in stream:
-                if isinstance(chunk.content, str):
-                    yield chunk.content
-                elif isinstance(chunk.content, list) and len(chunk.content) > 0:
-                    for block in chunk.content:
-                        if isinstance(block, dict) and "text" in block:
-                            yield block["text"]
+                usage = getattr(chunk, "usage_metadata", None)
+                if usage and usage.get("output_tokens"):
+                    out_tokens = usage["output_tokens"]
+                if usage and usage.get("input_tokens"):
+                    in_tokens = usage["input_tokens"]
+                if isinstance(chunk.content, list) and chunk.content:
+                    text = "".join(
+                        block["text"]
+                        for block in chunk.content
+                        if isinstance(block, dict) and "text" in block
+                    )
+                elif isinstance(chunk.content, str):
+                    text = chunk.content
+                else:
+                    text = ""
+                if not text:
+                    continue
+                full_text += text
+                yield text
+            stats["out_tokens"] = out_tokens or max(len(full_text) // 4, 1)
+            stats["in_tokens"] = in_tokens
+            stats["elapsed"] = max(time.perf_counter() - start, 0.001)
+
         st.write_stream(response_generator())
+
+        out_tokens = stats.get("out_tokens", 0)
+        elapsed = stats.get("elapsed", 0)
+        in_tokens = stats.get("in_tokens")
+        st.markdown(
+            f"<small style='color:gray;'>"
+            f"{out_tokens} tokens · {elapsed:.1f}s · {out_tokens / elapsed:.1f} tok/s"
+            + (f" · prompt {in_tokens} tokens" if in_tokens else "")
+            + "</small>",
+            unsafe_allow_html=True,
+        )

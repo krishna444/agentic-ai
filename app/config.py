@@ -33,8 +33,20 @@ class Settings(BaseSettings):
     SYSTEM: str
     HUMAN: str
 
-    APP_USERNAME: str
-    APP_PASSWORD: str
+    APP_USERS: str
+
+    @property
+    def users_map(self) -> dict[str, str]:
+        users: dict[str, str] = {}
+        for entry in self.APP_USERS.split(","):
+            entry = entry.strip()
+            if not entry:
+                continue
+            username, _, password = entry.partition(":")
+            username, password = username.strip(), password.strip()
+            if username and password:
+                users[username] = password
+        return users
     
     model_config = SettingsConfigDict(env_file=".env",extra="ignore")
 
