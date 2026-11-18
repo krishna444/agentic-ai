@@ -59,7 +59,7 @@ with st.sidebar:
 
 PROVIDERS = {
     "OCI": {
-        "models": [settings.OCI_MODEL_GEMMA, settings.OCI_MODEL_QWEN],
+        "models": [settings.OCI_MODEL_QWEN,settings.OCI_MODEL_GEMMA],
         "api_key": settings.OCI_LLM_API_KEY,
         "base_url": settings.OCI_LLM_BASE_URL,
         "disable_thinking": True,
