@@ -4,20 +4,32 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     # API Keys
-    GEMINI_API_KEY: str
-    OPENAI_API_KEY: str
-    GROQ_API_KEY: str
-    
     # LLM Models
-    GEMINI_MODEL: str= "gemma-4-31b-it"
+    GOOGLE_API_KEY: str
+    GOOGLE_MODEL: str
+    GOOGLE_PROVIDER: str
+    GOOGLE_BASE_URL: str
+    
+    GROQ_API_KEY: str
+    GROQ_MODEL:str
+    GROQ_PROVIDER:str
+    
+    GPT_API_KEY:str
+    GPT_MODEL:str
+    GPT_PROVIDER:str
+    GPT_BASE_URL:str
+    
+    OCI_LLM_API_KEY:str
+    OCI_MODEL_GEMMA:str
+    OCI_MODEL_QWEN:str
+    OCI_LLM_BASE_URL:str
 
-    GROQ_MODEL:str="openai/gpt-oss-20b"
-    GROQ_PROVIDER:str="openai"
-    GROQ_BASE_URL:str='https://api.groq.com/openai/v1'
-    
-    GPT_MODEL:str="gpt-4o-mini"
-    GPT_PROVIDER:str="openai"
-    
+    OPENROUTER_API_KEY:str
+    OPENROUTER_MODEL_DEEPSEEK:str
+    OPENROUTER_MODEL_GLM:str
+    OPENROUTER_BASE_URL:str
+    OPENROUTER_PROVIDER:str
+
     SYSTEM: str
     HUMAN: str
     
