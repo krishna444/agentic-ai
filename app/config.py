@@ -22,12 +22,12 @@ class Settings(BaseSettings):
     
     OCI_LLM_API_KEY:str
     OCI_MODEL_GEMMA:str
-    OCI_MODEL_QWEN:str
+    OCI_MODEL_QWEN:str    
     OCI_LLM_BASE_URL:str
 
     OPENROUTER_API_KEY:str
     OPENROUTER_MODEL_DEEPSEEK:str
-    OPENROUTER_MODEL_GLM:str
+    OPENROUTER_MODEL_GLM:str    
     OPENROUTER_BASE_URL:str
     OPENROUTER_PROVIDER:str
 

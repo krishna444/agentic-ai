@@ -51,7 +51,25 @@ if not st.session_state.authenticated:
 with st.sidebar:
     st.title("Welcome to AI Chatbot")
     st.write(f"👤 **{st.session_state.username}**")
-    if st.button("🚪 Logout"):
+    col_new, col_out = st.columns(2)
+    if col_new.button("🔄 New", use_container_width=True):
+        username = st.session_state.username
+        prev_session = st.session_state.get("session_num", 1)
+        prev_provider = st.session_state.get(f"provider_{prev_session}")
+        prev_model = st.session_state.get(
+            f"model_{prev_session}_{prev_provider}"
+        )
+        session_num = prev_session + 1
+        st.session_state.clear()
+        st.session_state.authenticated = True
+        st.session_state.username = username
+        st.session_state.session_num = session_num
+        if prev_provider:
+            st.session_state[f"provider_{session_num}"] = prev_provider
+        if prev_model:
+            st.session_state[f"model_{session_num}_{prev_provider}"] = prev_model
+        st.rerun()
+    if col_out.button("🚪 Logout", use_container_width=True):
         st.session_state.authenticated = False
         st.session_state.clear()
         st.rerun()
@@ -114,10 +132,12 @@ def build_llm(provider_key: str, model: str):
 
 
 # ---- Provider / Model selection ----
+session_num = st.session_state.get("session_num", 1)
 selected_provider = st.sidebar.selectbox(
     "Choose Provider:",
     options=list(PROVIDERS.keys()),
     index=0,
+    key=f"provider_{session_num}",
 )
 provider_spec = PROVIDERS[selected_provider]
 
@@ -125,6 +145,7 @@ selected_model = st.sidebar.selectbox(
     "Choose Model:",
     options=provider_spec["models"],
     index=0,
+    key=f"model_{session_num}_{selected_provider}",
 )
 # ---- LLM cache (per provider+model) ----
 if "llm_cache" not in st.session_state:
@@ -179,7 +200,7 @@ active_llm = RunnableWithMessageHistory(
     get_session_history=get_session_history,
 )
 
-THREAD_ID = f"user-{st.session_state.username}-session-1"
+THREAD_ID = f"user-{st.session_state.username}-session-{st.session_state.get('session_num', 1)}"
 config = {"configurable": {"session_id": THREAD_ID}}
 
 def _render_user_message(text: str):
